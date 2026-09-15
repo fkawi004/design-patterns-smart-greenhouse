@@ -4,6 +4,7 @@ from scalar_fastapi import get_scalar_api_reference
 
 from src.infrastructure.settings import get_settings
 from src.interfaces.api.health import router as health_router
+from src.interfaces.api.sensors import router as sensors_router
 
 settings = get_settings()
 
@@ -22,6 +23,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(health_router)
+app.include_router(sensors_router)
 
 
 @app.get("/", tags=["system"])
@@ -39,4 +41,3 @@ async def scalar_api_reference():
         openapi_url=app.openapi_url,
         title=f"{app.title} — API Reference",
     )
-

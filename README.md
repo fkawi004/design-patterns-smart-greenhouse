@@ -1,53 +1,34 @@
-# Smart Greenhouse — Design Patterns
+# Design Patterns Smart Greenhouse
 
-A runnable three-tier course project with a FastAPI backend, PostgreSQL migrations, and a React + TypeScript dashboard shell.
+A runnable three-tier course project with a FastAPI backend, PostgreSQL migrations, and a React + TypeScript dashboard. Phase 2 uses Factory Method to create and store moisture and light sensors.
 
 ## Prerequisites
 
-- Python 3.11 or newer
-- Node.js 20 or newer and npm
 - Docker Desktop with Docker Compose
 - Git
 
 ## First-time setup
 
-From the repository root:
+Copy the example environment file, build the containers, apply the migrations, and start the application:
 
 ```powershell
 Copy-Item .env.example .env
-docker compose up -d postgres
-
-cd backend
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -e ".[dev]"
-alembic upgrade head
-
-cd ..\frontend
-npm install
+docker compose up --build -d
+docker compose exec backend alembic upgrade head
 ```
 
-The baseline migration creates only Alembic's version table. Phase 1 intentionally has no business tables.
+The migration creates the shared `devices` table used by sensors. The database data remains in a Docker volume after containers restart.
 
 ## Daily start
 
-Use three terminals from the repository root:
+Start or stop the complete development stack from the repository root:
 
 ```powershell
-# Terminal 1: database
-docker compose up -d postgres
-
-# Terminal 2: API
-cd backend
-.\.venv\Scripts\Activate.ps1
-uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
-
-# Terminal 3: UI
-cd frontend
-npm run dev
+docker compose up -d
+docker compose down
 ```
 
-Apply any new database revisions from `backend` with `alembic upgrade head`.
+The backend and frontend source directories are mounted into their development containers, so both servers reload when code changes.
 
 ## Development URLs
 
@@ -56,19 +37,18 @@ Apply any new database revisions from `backend` with `alembic upgrade head`.
 - Health: http://localhost:8000/health
 - Scalar API reference: http://localhost:8000/scalar
 - OpenAPI JSON: http://localhost:8000/openapi.json
+- Sensors API: http://localhost:8000/api/sensors
 
 Swagger at `/docs` and ReDoc at `/redoc` are intentionally disabled.
 
 ## Checks
 
 ```powershell
-cd backend
-ruff check .
-pytest
-alembic current
-
-cd ..\frontend
-npm run build
+docker compose exec backend ruff check .
+docker compose exec backend pytest
+docker compose exec backend alembic current
+docker compose exec frontend npm run lint
+docker compose exec frontend npm run build
 ```
 
-See [the phase order](docs/phases/README.md) and [Phase 1 answers](docs/phases/phase-01/questions.md).
+See [the phase order](docs/phases/README.md), [the Factory Method notes](docs/patterns/factory-method.md), and [the Phase 2 answers](docs/phases/phase-02/questions.md).
