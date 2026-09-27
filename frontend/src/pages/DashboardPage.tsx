@@ -1,4 +1,5 @@
 import DeviceList from "../components/devices/DeviceList";
+import LocationConfigWizard from "../components/config/LocationConfigWizard";
 import SensorList from "../features/sensors/SensorList";
 
 const sections = [
@@ -6,13 +7,12 @@ const sections = [
   { id: "controls", title: "Controls", copy: "Manual greenhouse controls will live here." },
   { id: "automation", title: "Automation", copy: "Rules and scheduled actions are coming later." },
   { id: "events", title: "Events", copy: "System activity and alerts will appear here." },
-  { id: "configuration", title: "Configuration", copy: "Greenhouse and device settings will live here." },
 ];
 
 export default function DashboardPage() {
   return (
     <section aria-labelledby="dashboard-title">
-      <p className="text-sm font-medium text-cyan-300">Phase 3 · Abstract Factory</p>
+      <p className="text-sm font-medium text-cyan-300">Phase 4 · Builder</p>
       <h2 id="dashboard-title" className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
         Greenhouse dashboard
       </h2>
@@ -22,6 +22,7 @@ export default function DashboardPage() {
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <DeviceList />
+        <LocationConfigWizard />
         <SensorList />
         {sections.map((section) => (
           <article

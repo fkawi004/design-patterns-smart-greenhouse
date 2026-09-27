@@ -1,4 +1,5 @@
 from typing import Literal
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -6,15 +7,23 @@ from sqlalchemy.orm import Session
 from src.application.devices.dto import DeviceDto
 from src.application.devices.family_service import DeviceFamilyService
 from src.application.devices.mappers import device_to_dto
+from src.application.locations.dto import ZoneAssignmentRequestDto
+from src.application.locations.errors import DeviceNotFoundError, ZoneNotFoundError
+from src.application.locations.zone_assignment_service import ZoneAssignmentService
 from src.domain.devices.family_factory import UnknownDeviceFamilyError
 from src.infrastructure.db import get_session
 from src.infrastructure.persistence.device_repository import SqlAlchemyDeviceRepository
+from src.infrastructure.persistence.location_repository import SqlAlchemyZoneAssignmentRepository
 
 router = APIRouter(prefix="/api/devices", tags=["devices"])
 
 
 def get_device_service(session: Session = Depends(get_session)) -> DeviceFamilyService:
     return DeviceFamilyService(SqlAlchemyDeviceRepository(session))
+
+
+def get_assignment_service(session: Session = Depends(get_session)) -> ZoneAssignmentService:
+    return ZoneAssignmentService(SqlAlchemyZoneAssignmentRepository(session))
 
 
 @router.get("", response_model=list[DeviceDto])
@@ -40,3 +49,15 @@ def provision_device_family(
     except UnknownDeviceFamilyError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
     return [device_to_dto(device) for device in devices]
+
+
+@router.patch("/{device_id}/zone", response_model=DeviceDto)
+def assign_device_to_zone(
+    device_id: UUID,
+    request: ZoneAssignmentRequestDto,
+    service: ZoneAssignmentService = Depends(get_assignment_service),
+) -> DeviceDto:
+    try:
+        return service.assign(device_id, request.zone_id)
+    except (DeviceNotFoundError, ZoneNotFoundError) as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error

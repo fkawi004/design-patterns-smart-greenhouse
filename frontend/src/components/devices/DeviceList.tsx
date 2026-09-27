@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import {
+  assignDeviceToZone,
   fetchDevices,
+  fetchLocationConfig,
+  fetchLocations,
   provisionDeviceFamily,
   type DeviceDto,
   type DeviceFamily,
+  type LocationConfigDto,
 } from "../../services/api";
 import DeviceFamilySwitcher from "./DeviceFamilySwitcher";
 
@@ -18,6 +22,9 @@ export default function DeviceList() {
   const [devices, setDevices] = useState<DeviceDto[]>([]);
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [isProvisioning, setIsProvisioning] = useState(false);
+  const [assigningDeviceId, setAssigningDeviceId] = useState<string | null>(null);
+  const [locationConfigs, setLocationConfigs] = useState<LocationConfigDto[]>([]);
+  const [assignmentError, setAssignmentError] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -34,6 +41,31 @@ export default function DeviceList() {
     return () => controller.abort();
   }, [family]);
 
+  useEffect(() => {
+    let active = true;
+    async function loadZoneOptions() {
+      try {
+        const locations = await fetchLocations();
+        const configs = await Promise.all(
+          locations.map((location) => fetchLocationConfig(location.id)),
+        );
+        if (active) setLocationConfigs(configs);
+      } catch {
+        if (active) setAssignmentError("Zone choices could not be loaded.");
+      }
+    }
+    function refreshAfterLocationChange() {
+      void loadZoneOptions();
+      void fetchDevices(family).then(setDevices);
+    }
+    void loadZoneOptions();
+    window.addEventListener("locations-changed", refreshAfterLocationChange);
+    return () => {
+      active = false;
+      window.removeEventListener("locations-changed", refreshAfterLocationChange);
+    };
+  }, [family]);
+
   async function provisionFamily() {
     setIsProvisioning(true);
     try {
@@ -44,6 +76,20 @@ export default function DeviceList() {
       setLoadState("error");
     } finally {
       setIsProvisioning(false);
+    }
+  }
+
+  async function assignZone(deviceId: string, zoneId: string) {
+    setAssigningDeviceId(deviceId);
+    setAssignmentError(null);
+    try {
+      const updated = await assignDeviceToZone(deviceId, zoneId || null);
+      setDevices((items) => items.map((item) => item.id === deviceId ? updated : item));
+      window.dispatchEvent(new Event("device-assignments-changed"));
+    } catch (error) {
+      setAssignmentError(error instanceof Error ? error.message : "Assignment failed.");
+    } finally {
+      setAssigningDeviceId(null);
     }
   }
 
@@ -80,6 +126,7 @@ export default function DeviceList() {
       </div>
 
       <div className="mt-6" aria-live="polite">
+        {assignmentError && <p className="mb-3 text-sm text-rose-300">{assignmentError}</p>}
         {loadState === "loading" && <p className="text-sm text-slate-400">Loading devices...</p>}
         {loadState === "error" && (
           <p className="text-sm text-rose-300">
@@ -125,6 +172,26 @@ export default function DeviceList() {
                     </div>
                   ))}
                 </dl>
+                <label className="mt-4 block text-xs text-slate-400">
+                  Zone assignment
+                  <select
+                    value={device.zone_id ?? ""}
+                    disabled={assigningDeviceId === device.id}
+                    onChange={(event) => void assignZone(device.id, event.target.value)}
+                    className="mt-1 w-full rounded-lg border border-white/10 bg-slate-900 px-2 py-2 text-xs text-white disabled:opacity-50"
+                  >
+                    <option value="">Unassigned</option>
+                    {locationConfigs.map((config) => (
+                      <optgroup key={config.location.id} label={config.location.name}>
+                        {config.zones.map((zone) => (
+                          <option key={zone.id} value={zone.id}>
+                            {config.location.name} — {zone.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </label>
               </li>
             ))}
           </ul>

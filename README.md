@@ -1,6 +1,6 @@
 # Design Patterns Smart Greenhouse
 
-A runnable three-tier course project with a FastAPI backend, PostgreSQL migrations, and a React + TypeScript dashboard. Phase 3 uses Abstract Factory to provision matching simulation and edge device families while keeping Phase 2 sensor creation.
+A runnable three-tier course project with a FastAPI backend, PostgreSQL migrations, and a React + TypeScript dashboard. Phase 4 uses Builder to create valid location configurations while keeping the sensor and device-family features from earlier phases.
 
 ## Prerequisites
 
@@ -17,7 +17,7 @@ docker compose up --build -d
 docker compose exec backend alembic upgrade head
 ```
 
-The migrations create the shared `devices` table and add a device family for sensors and actuators. The database data remains in a Docker volume after containers restart.
+The migrations create the shared `devices` table, device families, locations, zones, and device assignment fields. The database data remains in a Docker volume after containers restart.
 
 ## Daily start
 
@@ -39,6 +39,7 @@ The backend and frontend source directories are mounted into their development c
 - OpenAPI JSON: http://localhost:8000/openapi.json
 - Sensors API: http://localhost:8000/api/sensors
 - Devices API: http://localhost:8000/api/devices
+- Locations API: http://localhost:8000/api/locations
 
 Swagger at `/docs` and ReDoc at `/redoc` are intentionally disabled.
 
@@ -52,4 +53,4 @@ docker compose exec frontend npm run lint
 docker compose exec frontend npm run build
 ```
 
-See [the phase order](docs/phases/README.md), [the Abstract Factory notes](docs/patterns/abstract-factory.md), and [the Phase 3 answers](docs/phases/phase-03/questions.md).
+See [the phase order](docs/phases/README.md), [the Builder notes](docs/patterns/builder.md), and [the Phase 4 answers](docs/phases/phase-04/questions.md).
