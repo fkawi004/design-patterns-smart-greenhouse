@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import DateTime, String, func, text
+from sqlalchemy import DateTime, Index, String, func, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -12,6 +12,7 @@ from src.infrastructure.persistence.base import Base
 
 class DeviceRow(Base):
     __tablename__ = "devices"
+    __table_args__ = (Index("ix_devices_family", "device_family"),)
 
     id: Mapped[UUID] = mapped_column(
         PostgreSQLUUID(as_uuid=True),
@@ -24,6 +25,11 @@ class DeviceRow(Base):
         nullable=False,
         server_default=text("'sensor'"),
         index=True,
+    )
+    device_family: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        server_default=text("'simulation'"),
     )
     display_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
     default_config: Mapped[dict[str, Any]] = mapped_column(
