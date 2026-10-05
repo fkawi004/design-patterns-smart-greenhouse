@@ -10,10 +10,17 @@ from src.application.devices.mappers import device_to_dto
 from src.application.locations.dto import ZoneAssignmentRequestDto
 from src.application.locations.errors import DeviceNotFoundError, ZoneNotFoundError
 from src.application.locations.zone_assignment_service import ZoneAssignmentService
+from src.application.readings.dto import SamplingSettingsDto, SamplingSettingsRequestDto
+from src.application.readings.errors import (
+    ReadingDeviceNotFoundError,
+    ReadingValidationError,
+)
+from src.application.readings.service import ReadingIngest
 from src.domain.devices.family_factory import UnknownDeviceFamilyError
 from src.infrastructure.db import get_session
 from src.infrastructure.persistence.device_repository import SqlAlchemyDeviceRepository
 from src.infrastructure.persistence.location_repository import SqlAlchemyZoneAssignmentRepository
+from src.interfaces.api.reading_dependencies import build_reading_ingest
 
 router = APIRouter(prefix="/api/devices", tags=["devices"])
 
@@ -24,6 +31,10 @@ def get_device_service(session: Session = Depends(get_session)) -> DeviceFamilyS
 
 def get_assignment_service(session: Session = Depends(get_session)) -> ZoneAssignmentService:
     return ZoneAssignmentService(SqlAlchemyZoneAssignmentRepository(session))
+
+
+def get_reading_ingest(session: Session = Depends(get_session)) -> ReadingIngest:
+    return build_reading_ingest(session)
 
 
 @router.get("", response_model=list[DeviceDto])
@@ -61,3 +72,21 @@ def assign_device_to_zone(
         return service.assign(device_id, request.zone_id)
     except (DeviceNotFoundError, ZoneNotFoundError) as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.patch("/{device_id}/sampling", response_model=SamplingSettingsDto)
+def update_device_sampling(
+    device_id: UUID,
+    request: SamplingSettingsRequestDto,
+    ingest: ReadingIngest = Depends(get_reading_ingest),
+) -> SamplingSettingsDto:
+    try:
+        return ingest.update_sampling(
+            device_id,
+            request.sampling_interval_seconds,
+            request.tracking_enabled,
+        )
+    except ReadingDeviceNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ReadingValidationError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error

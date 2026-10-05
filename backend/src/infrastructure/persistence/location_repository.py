@@ -193,4 +193,6 @@ class SqlAlchemyZoneAssignmentRepository:
             default_config=row.default_config,
             zone_id=row.zone_id,
             location_id=row.location_id,
+            sampling_interval_seconds=row.sampling_interval_seconds,
+            tracking_enabled=row.tracking_enabled,
         )

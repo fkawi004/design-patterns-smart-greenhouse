@@ -8,6 +8,22 @@ export interface SensorDto {
   device_type: string;
   display_name: string;
   default_config: Record<string, unknown>;
+  sampling_interval_seconds: number;
+  tracking_enabled: boolean;
+}
+
+export interface ReadingDto {
+  device_id: string;
+  value: number;
+  unit: string;
+  source: "simulation" | "mqtt" | "vendor";
+  recorded_at: string;
+}
+
+export interface SamplingSettingsDto {
+  device_id: string;
+  sampling_interval_seconds: number;
+  tracking_enabled: boolean;
 }
 
 export interface CreateSensorRequest {
@@ -27,6 +43,8 @@ export interface DeviceDto {
   default_config: Record<string, unknown>;
   zone_id: string | null;
   location_id: string | null;
+  sampling_interval_seconds: number;
+  tracking_enabled: boolean;
 }
 
 export interface ZoneWriteDto {
@@ -93,6 +111,44 @@ export async function createSensor(request: CreateSensorRequest): Promise<Sensor
     throw new Error(`Sensor creation failed with status ${response.status}`);
   }
   return response.json() as Promise<SensorDto>;
+}
+
+export async function readSensor(sensorId: string): Promise<ReadingDto> {
+  const response = await fetch(`${API_BASE_URL}/api/sensors/${sensorId}/read`, {
+    method: "POST",
+  });
+  if (!response.ok) throw new Error(await errorDetail(response, "Sensor could not be read."));
+  return response.json() as Promise<ReadingDto>;
+}
+
+export async function fetchSensorReadings(
+  sensorId: string,
+  limit = 20,
+  signal?: AbortSignal,
+): Promise<ReadingDto[]> {
+  const query = new URLSearchParams({ limit: String(limit) });
+  const response = await fetch(`${API_BASE_URL}/api/sensors/${sensorId}/readings?${query}`, {
+    signal,
+  });
+  if (!response.ok) throw new Error(await errorDetail(response, "Readings could not be loaded."));
+  return response.json() as Promise<ReadingDto[]>;
+}
+
+export async function updateDeviceSampling(
+  deviceId: string,
+  samplingIntervalSeconds: number,
+  trackingEnabled: boolean,
+): Promise<SamplingSettingsDto> {
+  const response = await fetch(`${API_BASE_URL}/api/devices/${deviceId}/sampling`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sampling_interval_seconds: samplingIntervalSeconds,
+      tracking_enabled: trackingEnabled,
+    }),
+  });
+  if (!response.ok) throw new Error(await errorDetail(response, "Sampling settings failed."));
+  return response.json() as Promise<SamplingSettingsDto>;
 }
 
 export async function fetchDevices(

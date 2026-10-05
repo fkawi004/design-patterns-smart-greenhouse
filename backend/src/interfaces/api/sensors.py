@@ -1,15 +1,23 @@
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from src.application.readings.dto import ReadingDto
+from src.application.readings.errors import (
+    ReadingDeviceNotFoundError,
+    ReadingValidationError,
+)
+from src.application.readings.service import ReadingIngest
 from src.application.sensors.service import SensorService
 from src.domain.sensors.creators import UnknownSensorTypeError
 from src.domain.sensors.entity import Sensor
+from src.infrastructure.adapters.sensors.errors import SensorAdapterError
 from src.infrastructure.db import get_session
 from src.infrastructure.persistence.device_repository import SqlAlchemySensorRepository
+from src.interfaces.api.reading_dependencies import build_reading_ingest
 
 router = APIRouter(prefix="/api/sensors", tags=["sensors"])
 
@@ -24,10 +32,16 @@ class SensorResponse(BaseModel):
     device_type: str
     display_name: str
     default_config: dict[str, Any]
+    sampling_interval_seconds: int
+    tracking_enabled: bool
 
 
 def get_sensor_service(session: Session = Depends(get_session)) -> SensorService:
     return SensorService(SqlAlchemySensorRepository(session))
+
+
+def get_reading_ingest(session: Session = Depends(get_session)) -> ReadingIngest:
+    return build_reading_ingest(session)
 
 
 def to_response(sensor: Sensor) -> SensorResponse:
@@ -38,6 +52,8 @@ def to_response(sensor: Sensor) -> SensorResponse:
         device_type=sensor.device_type,
         display_name=sensor.display_name,
         default_config=sensor.default_config,
+        sampling_interval_seconds=sensor.sampling_interval_seconds,
+        tracking_enabled=sensor.tracking_enabled,
     )
 
 
@@ -56,3 +72,34 @@ def create_sensor(
     except UnknownSensorTypeError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
     return to_response(sensor)
+
+
+@router.post(
+    "/{sensor_id}/read",
+    response_model=ReadingDto,
+    status_code=status.HTTP_201_CREATED,
+)
+def read_sensor(
+    sensor_id: UUID,
+    ingest: ReadingIngest = Depends(get_reading_ingest),
+) -> ReadingDto:
+    try:
+        return ingest.take_reading(sensor_id)
+    except ReadingDeviceNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except (ReadingValidationError, SensorAdapterError) as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@router.get("/{sensor_id}/readings", response_model=list[ReadingDto])
+def list_sensor_readings(
+    sensor_id: UUID,
+    limit: int = Query(default=20, ge=1, le=100),
+    ingest: ReadingIngest = Depends(get_reading_ingest),
+) -> list[ReadingDto]:
+    try:
+        return ingest.list_readings(sensor_id, limit)
+    except ReadingDeviceNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ReadingValidationError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error

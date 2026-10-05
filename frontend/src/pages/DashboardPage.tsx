@@ -12,7 +12,7 @@ const sections = [
 export default function DashboardPage() {
   return (
     <section aria-labelledby="dashboard-title">
-      <p className="text-sm font-medium text-cyan-300">Phase 4 · Builder</p>
+      <p className="text-sm font-medium text-cyan-300">Phase 5 · Adapter</p>
       <h2 id="dashboard-title" className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
         Greenhouse dashboard
       </h2>

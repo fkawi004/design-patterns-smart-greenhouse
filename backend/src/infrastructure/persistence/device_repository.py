@@ -17,6 +17,13 @@ class SqlAlchemySensorRepository:
             device_family="simulation",
             display_name=sensor.display_name,
             default_config=sensor.default_config,
+            sampling_interval_seconds=int(
+                sensor.default_config.get(
+                    "sampling_interval_seconds",
+                    sensor.sampling_interval_seconds,
+                )
+            ),
+            tracking_enabled=sensor.tracking_enabled,
         )
         self.session.add(row)
         self.session.commit()
@@ -39,6 +46,8 @@ class SqlAlchemySensorRepository:
             device_type=row.device_type,
             display_name=row.display_name or row.device_type,
             default_config=row.default_config,
+            sampling_interval_seconds=row.sampling_interval_seconds,
+            tracking_enabled=row.tracking_enabled,
         )
 
 
@@ -83,6 +92,13 @@ class SqlAlchemyDeviceRepository:
             device_family=device.device_family,
             display_name=device.display_name,
             default_config=device.default_config,
+            sampling_interval_seconds=int(
+                device.default_config.get(
+                    "sampling_interval_seconds",
+                    device.sampling_interval_seconds,
+                )
+            ),
+            tracking_enabled=device.tracking_enabled,
         )
 
     @staticmethod
@@ -96,4 +112,6 @@ class SqlAlchemyDeviceRepository:
             default_config=row.default_config,
             zone_id=row.zone_id,
             location_id=row.location_id,
+            sampling_interval_seconds=row.sampling_interval_seconds,
+            tracking_enabled=row.tracking_enabled,
         )

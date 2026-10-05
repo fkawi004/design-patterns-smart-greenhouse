@@ -1,0 +1,2 @@
+class SensorAdapterError(ValueError):
+    pass

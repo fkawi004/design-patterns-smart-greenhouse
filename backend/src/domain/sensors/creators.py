@@ -20,6 +20,7 @@ class MoistureSensorCreator(SensorCreator):
             display_name=display_name or "Moisture Sensor",
             default_config={
                 "unit": "percent",
+                "protocol": "simulation",
                 "sampling_interval_seconds": 60,
                 "moisture_threshold": 30,
             },
@@ -33,6 +34,7 @@ class LightSensorCreator(SensorCreator):
             display_name=display_name or "Light Sensor",
             default_config={
                 "unit": "lux",
+                "protocol": "simulation",
                 "sampling_interval_seconds": 30,
                 "low_light_threshold": 200,
             },
