@@ -1,6 +1,6 @@
 # Design Patterns Smart Greenhouse
 
-A runnable three-tier course project with a FastAPI backend, PostgreSQL migrations, and a React + TypeScript dashboard. Phase 5 uses Adapter ports for simulated, vendor-stub, and MQTT-shaped sensor readings, then saves every reading for later history and Strategy work.
+A runnable three-tier course project with a FastAPI backend, PostgreSQL migrations, and a React + TypeScript dashboard. Phase 6 uses pluggable Strategy policies to evaluate the latest saved sensor readings against each zone's thresholds.
 
 ## Prerequisites
 
@@ -17,7 +17,7 @@ docker compose up --build -d
 docker compose exec backend alembic upgrade head
 ```
 
-The migrations create the shared `devices` table, device families, locations, zones, device assignment fields, and append-only `sensor_readings` history. The database data remains in a Docker volume after containers restart.
+The migrations create the shared `devices` table, device families, locations, zones, device assignment fields, append-only `sensor_readings` history, and one persisted `automation_rules` strategy per location. The database data remains in a Docker volume after containers restart.
 
 ## Daily start
 
@@ -41,6 +41,7 @@ The backend and frontend source directories are mounted into their development c
 - Sensor reading API: `POST /api/sensors/{id}/read` and `GET /api/sensors/{id}/readings`
 - Devices API: http://localhost:8000/api/devices
 - Locations API: http://localhost:8000/api/locations
+- Automation API: `PUT /api/locations/{id}/automation` and `POST /api/locations/{id}/automation/evaluate`
 
 Swagger at `/docs` and ReDoc at `/redoc` are intentionally disabled.
 
@@ -54,4 +55,4 @@ docker compose exec frontend npm run lint
 docker compose exec frontend npm run build
 ```
 
-See [the phase order](docs/phases/README.md), [the Adapter notes](docs/patterns/adapter.md), and [the Phase 5 answers](docs/phases/phase-05/questions.md).
+See [the phase order](docs/phases/README.md), [the Strategy notes](docs/patterns/strategy.md), and [the Phase 6 answers](docs/phases/phase-06/questions.md).

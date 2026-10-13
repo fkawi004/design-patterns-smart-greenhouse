@@ -69,6 +69,18 @@ export interface LocationConfigDto {
   zones: ZoneDto[];
 }
 
+export type AutomationStrategyKey = "conservative" | "aggressive";
+
+export interface StrategySelectionDto {
+  location_id: string;
+  strategy_key: AutomationStrategyKey;
+}
+
+export interface RecommendationDto extends StrategySelectionDto {
+  action: "irrigate" | "wait";
+  reason: string;
+}
+
 export interface BuildLocationConfigRequestDto {
   location_name: string;
   zones: ZoneWriteDto[];
@@ -182,6 +194,39 @@ export async function fetchLocations(signal?: AbortSignal): Promise<LocationSumm
   const response = await fetch(`${API_BASE_URL}/api/locations`, { signal });
   if (!response.ok) throw new Error(await errorDetail(response, "Locations could not be loaded."));
   return response.json() as Promise<LocationSummaryDto[]>;
+}
+
+export async function fetchLocationStrategy(
+  locationId: string,
+  signal?: AbortSignal,
+): Promise<StrategySelectionDto> {
+  const response = await fetch(`${API_BASE_URL}/api/locations/${locationId}/automation`, { signal });
+  if (!response.ok) throw new Error(await errorDetail(response, "Strategy could not be loaded."));
+  return response.json() as Promise<StrategySelectionDto>;
+}
+
+export async function saveLocationStrategy(
+  locationId: string,
+  strategyKey: AutomationStrategyKey,
+): Promise<StrategySelectionDto> {
+  const response = await fetch(`${API_BASE_URL}/api/locations/${locationId}/automation`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ strategy_key: strategyKey }),
+  });
+  if (!response.ok) throw new Error(await errorDetail(response, "Strategy could not be saved."));
+  return response.json() as Promise<StrategySelectionDto>;
+}
+
+export async function evaluateLocationAutomation(
+  locationId: string,
+): Promise<RecommendationDto> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/locations/${locationId}/automation/evaluate`,
+    { method: "POST" },
+  );
+  if (!response.ok) throw new Error(await errorDetail(response, "Automation could not be evaluated."));
+  return response.json() as Promise<RecommendationDto>;
 }
 
 export async function fetchLocationConfig(

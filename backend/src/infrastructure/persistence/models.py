@@ -103,6 +103,42 @@ class LocationRow(Base):
     )
 
 
+class AutomationRuleRow(Base):
+    __tablename__ = "automation_rules"
+
+    id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        primary_key=True,
+        server_default=text("gen_random_uuid()"),
+    )
+    location_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey(
+            "locations.id",
+            ondelete="CASCADE",
+            name="fk_automation_rules_location_id_locations",
+        ),
+        nullable=False,
+        unique=True,
+    )
+    strategy_key: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        server_default=text("'conservative'"),
+    )
+    parameters: Mapped[dict[str, Any]] = mapped_column(
+        JSONB,
+        nullable=False,
+        server_default=text("'{}'::jsonb"),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+
 class ZoneRow(Base):
     __tablename__ = "zones"
     __table_args__ = (Index("ix_zones_location_id", "location_id"),)

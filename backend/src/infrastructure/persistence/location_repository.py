@@ -5,7 +5,12 @@ from sqlalchemy.orm import Session
 
 from src.domain.devices.entity import Device
 from src.domain.locations.entity import Location, LocationConfig, Zone
-from src.infrastructure.persistence.models import DeviceRow, LocationRow, ZoneRow
+from src.infrastructure.persistence.models import (
+    AutomationRuleRow,
+    DeviceRow,
+    LocationRow,
+    ZoneRow,
+)
 
 
 class SqlAlchemyLocationRepository:
@@ -17,6 +22,13 @@ class SqlAlchemyLocationRepository:
             location_row = LocationRow(name=config.location.name)
             self.session.add(location_row)
             self.session.flush()
+            self.session.add(
+                AutomationRuleRow(
+                    location_id=location_row.id,
+                    strategy_key="conservative",
+                    parameters={},
+                )
+            )
             zone_rows = [
                 ZoneRow(
                     location_id=location_row.id,

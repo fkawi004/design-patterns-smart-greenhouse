@@ -1,18 +1,18 @@
 import DeviceList from "../components/devices/DeviceList";
 import LocationConfigWizard from "../components/config/LocationConfigWizard";
 import SensorList from "../features/sensors/SensorList";
+import StrategyPanel from "../features/automation/StrategyPanel";
 
 const sections = [
   { id: "overview", title: "Overview", copy: "At-a-glance greenhouse conditions and trends." },
   { id: "controls", title: "Controls", copy: "Manual greenhouse controls will live here." },
-  { id: "automation", title: "Automation", copy: "Rules and scheduled actions are coming later." },
   { id: "events", title: "Events", copy: "System activity and alerts will appear here." },
 ];
 
 export default function DashboardPage() {
   return (
     <section aria-labelledby="dashboard-title">
-      <p className="text-sm font-medium text-cyan-300">Phase 5 · Adapter</p>
+      <p className="text-sm font-medium text-cyan-300">Phase 6 · Strategy</p>
       <h2 id="dashboard-title" className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
         Greenhouse dashboard
       </h2>
@@ -24,6 +24,7 @@ export default function DashboardPage() {
         <DeviceList />
         <LocationConfigWizard />
         <SensorList />
+        <StrategyPanel />
         {sections.map((section) => (
           <article
             id={section.id}
