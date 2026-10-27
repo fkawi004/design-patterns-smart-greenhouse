@@ -81,6 +81,39 @@ export interface RecommendationDto extends StrategySelectionDto {
   reason: string;
 }
 
+export interface OverviewDeviceDto {
+  id: string;
+  device_type: string;
+  role: DeviceRole;
+  display_name: string;
+}
+
+export interface LatestReadingSummaryDto {
+  device_id: string;
+  value: number;
+  unit: string;
+  recorded_at: string;
+  tracking_enabled: boolean;
+  sampling_interval_seconds: number;
+}
+
+export interface OverviewZoneDto {
+  id: string;
+  name: string;
+  moisture_threshold_low: number;
+  moisture_threshold_high: number;
+  devices: OverviewDeviceDto[];
+  latest_readings: LatestReadingSummaryDto[];
+}
+
+export interface LocationOverviewDto {
+  location: LocationSummaryDto;
+  device_counts: { sensor: number; actuator: number };
+  zones: OverviewZoneDto[];
+  strategy_key: string | null;
+  last_recommendation: { action: string; reason: string } | null;
+}
+
 export interface BuildLocationConfigRequestDto {
   location_name: string;
   zones: ZoneWriteDto[];
@@ -203,6 +236,15 @@ export async function fetchLocationStrategy(
   const response = await fetch(`${API_BASE_URL}/api/locations/${locationId}/automation`, { signal });
   if (!response.ok) throw new Error(await errorDetail(response, "Strategy could not be loaded."));
   return response.json() as Promise<StrategySelectionDto>;
+}
+
+export async function fetchLocationOverview(
+  locationId: string,
+  signal?: AbortSignal,
+): Promise<LocationOverviewDto> {
+  const response = await fetch(`${API_BASE_URL}/api/locations/${locationId}/overview`, { signal });
+  if (!response.ok) throw new Error(await errorDetail(response, "Overview could not be loaded."));
+  return response.json() as Promise<LocationOverviewDto>;
 }
 
 export async function saveLocationStrategy(

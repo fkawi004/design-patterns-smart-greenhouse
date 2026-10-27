@@ -1,0 +1,2 @@
+class OverviewLocationNotFoundError(LookupError):
+    pass

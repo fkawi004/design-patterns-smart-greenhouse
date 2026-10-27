@@ -1,6 +1,6 @@
 # Design Patterns Smart Greenhouse
 
-A runnable three-tier course project with a FastAPI backend, PostgreSQL migrations, and a React + TypeScript dashboard. Phase 6 uses pluggable Strategy policies to evaluate the latest saved sensor readings against each zone's thresholds.
+A runnable three-tier course project with a FastAPI backend, PostgreSQL migrations, and a React + TypeScript dashboard. Phase 7 uses a Facade to compose locations, assigned devices, latest readings, and automation into one dashboard overview.
 
 ## Prerequisites
 
@@ -42,6 +42,7 @@ The backend and frontend source directories are mounted into their development c
 - Devices API: http://localhost:8000/api/devices
 - Locations API: http://localhost:8000/api/locations
 - Automation API: `PUT /api/locations/{id}/automation` and `POST /api/locations/{id}/automation/evaluate`
+- Overview API: `GET /api/locations/{id}/overview`
 
 Swagger at `/docs` and ReDoc at `/redoc` are intentionally disabled.
 
@@ -55,4 +56,4 @@ docker compose exec frontend npm run lint
 docker compose exec frontend npm run build
 ```
 
-See [the phase order](docs/phases/README.md), [the Strategy notes](docs/patterns/strategy.md), and [the Phase 6 answers](docs/phases/phase-06/questions.md).
+See [the phase order](docs/phases/README.md), [the Facade notes](docs/patterns/facade.md), and [the Phase 7 answers](docs/phases/phase-07/questions.md).

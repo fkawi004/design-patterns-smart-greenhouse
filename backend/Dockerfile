@@ -10,4 +10,4 @@ RUN pip install --no-cache-dir -e ".[dev]"
 
 EXPOSE 8000
 
-CMD ["uvicorn", "src.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "src.main:app", "--reload", "--reload-dir", "/app/src", "--host", "0.0.0.0", "--port", "8000"]
