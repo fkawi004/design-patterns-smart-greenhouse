@@ -1,9 +1,11 @@
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from src.domain.devices.entity import Device
 from src.domain.sensors.entity import Sensor
-from src.infrastructure.persistence.models import DeviceRow
+from src.infrastructure.persistence.models import ActuatorStateRow, DeviceRow
 
 
 class SqlAlchemySensorRepository:
@@ -58,31 +60,46 @@ class SqlAlchemyDeviceRepository:
     def save(self, device: Device) -> Device:
         row = self._to_row(device)
         self.session.add(row)
+        self.session.flush()
+        state = None
+        if device.role == "actuator":
+            state = device.state or "idle"
+            self.session.add(ActuatorStateRow(device_id=row.id, state=state))
         self.session.commit()
         self.session.refresh(row)
-        return self._to_device(row)
+        return self._to_device(row, state)
 
     def save_many(self, devices: list[Device]) -> list[Device]:
         rows = [self._to_row(device) for device in devices]
         self.session.add_all(rows)
+        self.session.flush()
+        states_by_device: dict[UUID, str] = {}
+        for device, row in zip(devices, rows, strict=True):
+            if device.role == "actuator":
+                state = device.state or "idle"
+                states_by_device[row.id] = state
+                self.session.add(ActuatorStateRow(device_id=row.id, state=state))
         self.session.commit()
         for row in rows:
             self.session.refresh(row)
-        return [self._to_device(row) for row in rows]
+        return [self._to_device(row, states_by_device.get(row.id)) for row in rows]
 
     def list_devices(
         self,
         device_family: str | None = None,
         role: str | None = None,
     ) -> list[Device]:
-        statement = select(DeviceRow)
+        statement = select(DeviceRow, ActuatorStateRow.state).outerjoin(
+            ActuatorStateRow,
+            ActuatorStateRow.device_id == DeviceRow.id,
+        )
         if device_family is not None:
             statement = statement.where(DeviceRow.device_family == device_family)
         if role is not None:
             statement = statement.where(DeviceRow.role == role)
         statement = statement.order_by(DeviceRow.created_at.desc(), DeviceRow.display_name)
-        rows = self.session.scalars(statement).all()
-        return [self._to_device(row) for row in rows]
+        rows = self.session.execute(statement).all()
+        return [self._to_device(row, state) for row, state in rows]
 
     @staticmethod
     def _to_row(device: Device) -> DeviceRow:
@@ -102,7 +119,7 @@ class SqlAlchemyDeviceRepository:
         )
 
     @staticmethod
-    def _to_device(row: DeviceRow) -> Device:
+    def _to_device(row: DeviceRow, state: str | None = None) -> Device:
         return Device(
             id=row.id,
             device_type=row.device_type,
@@ -114,4 +131,5 @@ class SqlAlchemyDeviceRepository:
             location_id=row.location_id,
             sampling_interval_seconds=row.sampling_interval_seconds,
             tracking_enabled=row.tracking_enabled,
+            state=state,
         )

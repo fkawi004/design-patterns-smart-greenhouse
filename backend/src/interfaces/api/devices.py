@@ -4,7 +4,13 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from src.application.devices.dto import DeviceDto
+from src.application.devices.actuator_state_service import ActuatorStateService
+from src.application.devices.dto import (
+    ActuatorStateDto,
+    ActuatorTransitionRequestDto,
+    DeviceDto,
+)
+from src.application.devices.errors import ActuatorNotFoundError
 from src.application.devices.family_service import DeviceFamilyService
 from src.application.devices.mappers import device_to_dto
 from src.application.locations.dto import ZoneAssignmentRequestDto
@@ -16,8 +22,12 @@ from src.application.readings.errors import (
     ReadingValidationError,
 )
 from src.application.readings.service import ReadingIngest
+from src.domain.actuators.state import IllegalTransitionError
 from src.domain.devices.family_factory import UnknownDeviceFamilyError
 from src.infrastructure.db import get_session
+from src.infrastructure.persistence.actuator_state_repository import (
+    SqlAlchemyActuatorStateRepository,
+)
 from src.infrastructure.persistence.device_repository import SqlAlchemyDeviceRepository
 from src.infrastructure.persistence.location_repository import SqlAlchemyZoneAssignmentRepository
 from src.interfaces.api.reading_dependencies import build_reading_ingest
@@ -35,6 +45,12 @@ def get_assignment_service(session: Session = Depends(get_session)) -> ZoneAssig
 
 def get_reading_ingest(session: Session = Depends(get_session)) -> ReadingIngest:
     return build_reading_ingest(session)
+
+
+def get_actuator_state_service(
+    session: Session = Depends(get_session),
+) -> ActuatorStateService:
+    return ActuatorStateService(SqlAlchemyActuatorStateRepository(session))
 
 
 @router.get("", response_model=list[DeviceDto])
@@ -60,6 +76,20 @@ def provision_device_family(
     except UnknownDeviceFamilyError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
     return [device_to_dto(device) for device in devices]
+
+
+@router.post("/{device_id}/transition", response_model=ActuatorStateDto)
+def transition_actuator(
+    device_id: UUID,
+    request: ActuatorTransitionRequestDto,
+    service: ActuatorStateService = Depends(get_actuator_state_service),
+) -> ActuatorStateDto:
+    try:
+        return service.transition(device_id, request.target)
+    except ActuatorNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except IllegalTransitionError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
 
 
 @router.patch("/{device_id}/zone", response_model=DeviceDto)

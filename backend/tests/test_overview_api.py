@@ -7,7 +7,13 @@ from fastapi.testclient import TestClient
 from sqlalchemy import delete, select
 
 from src.infrastructure.db import SessionLocal
-from src.infrastructure.persistence.models import DeviceRow, LocationRow, ReadingRow, ZoneRow
+from src.infrastructure.persistence.models import (
+    ActuatorStateRow,
+    DeviceRow,
+    LocationRow,
+    ReadingRow,
+    ZoneRow,
+)
 from src.main import app
 
 client = TestClient(app)
@@ -86,6 +92,7 @@ def _seed_overview() -> tuple[LocationRow, DeviceRow, DeviceRow]:
         )
         session.add_all([assigned_sensor, assigned_actuator, unassigned_sensor])
         session.flush()
+        session.add(ActuatorStateRow(device_id=assigned_actuator.id, state="idle"))
         session.add_all(
             [
                 ReadingRow(

@@ -13,6 +13,14 @@ import DeviceFamilySwitcher from "./DeviceFamilySwitcher";
 
 type LoadState = "loading" | "ready" | "error";
 
+const stateClasses: Record<string, string> = {
+  idle: "bg-slate-400/10 text-slate-300",
+  running: "bg-emerald-400/10 text-emerald-300",
+  error: "bg-rose-400/10 text-rose-300",
+  maintenance: "bg-amber-300/10 text-amber-200",
+  off: "bg-zinc-400/10 text-zinc-300",
+};
+
 function formatLabel(value: string) {
   return value.replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase());
 }
@@ -22,6 +30,7 @@ export default function DeviceList() {
   const [devices, setDevices] = useState<DeviceDto[]>([]);
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [isProvisioning, setIsProvisioning] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [assigningDeviceId, setAssigningDeviceId] = useState<string | null>(null);
   const [locationConfigs, setLocationConfigs] = useState<LocationConfigDto[]>([]);
   const [assignmentError, setAssignmentError] = useState<string | null>(null);
@@ -79,6 +88,18 @@ export default function DeviceList() {
     }
   }
 
+  async function refreshDevices() {
+    setIsRefreshing(true);
+    try {
+      setDevices(await fetchDevices(family));
+      setLoadState("ready");
+    } catch {
+      setLoadState("error");
+    } finally {
+      setIsRefreshing(false);
+    }
+  }
+
   async function assignZone(deviceId: string, zoneId: string) {
     setAssigningDeviceId(deviceId);
     setAssignmentError(null);
@@ -101,11 +122,11 @@ export default function DeviceList() {
       <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
-            Abstract Factory
+            Abstract Factory + State
           </p>
           <h3 className="mt-2 text-xl font-semibold text-slate-100">Devices</h3>
           <p className="mt-2 text-sm text-slate-400">
-            Provision a matching family of two sensors and two actuators.
+            Provision a matching family and view each actuator's persisted lifecycle state.
           </p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -121,6 +142,14 @@ export default function DeviceList() {
             className="rounded-xl bg-cyan-300 px-4 py-2.5 text-sm font-semibold text-cyan-950 hover:bg-cyan-200 disabled:cursor-wait disabled:opacity-60"
           >
             {isProvisioning ? "Provisioning..." : `Provision ${family} kit`}
+          </button>
+          <button
+            type="button"
+            onClick={() => void refreshDevices()}
+            disabled={isRefreshing || isProvisioning}
+            className="rounded-xl border border-white/10 px-4 py-2.5 text-sm font-semibold text-slate-200 hover:border-cyan-300/40 disabled:cursor-wait disabled:opacity-60"
+          >
+            {isRefreshing ? "Refreshing..." : "Refresh"}
           </button>
         </div>
       </div>
@@ -160,6 +189,18 @@ export default function DeviceList() {
                     <span className="rounded-full bg-cyan-300/10 px-2 py-1 text-xs text-cyan-200">
                       {device.device_family}
                     </span>
+                    {device.role === "actuator" && device.state && (
+                      <span
+                        className={`rounded-full px-2 py-1 text-xs ${stateClasses[device.state]}`}
+                        title={
+                          device.allowed_commands.length > 0
+                            ? `Allowed commands: ${device.allowed_commands.join(", ")}`
+                            : "No commands are allowed in this state"
+                        }
+                      >
+                        {device.state}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <dl className="mt-4 space-y-1 text-xs text-slate-400">

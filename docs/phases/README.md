@@ -9,6 +9,7 @@ This repository grows one phase at a time. Each phase keeps the same three-tier 
 5. Phase 5 — Adapter, sensor ports, and persisted reading history (completed)
 6. Phase 6 — Strategy and persisted location automation policies (completed)
 7. Phase 7 — Facade and the composed location overview (completed)
-8. Phases 8–12 — additional course patterns and greenhouse capabilities
+8. Phase 8 — State and persisted actuator lifecycle (completed)
+9. Phases 9–12 — additional course patterns and greenhouse capabilities
 
 Phase-specific requirements, implementation notes, and answers belong under this directory.

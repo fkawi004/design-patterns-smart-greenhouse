@@ -33,6 +33,7 @@ export interface CreateSensorRequest {
 
 export type DeviceFamily = "simulation" | "edge";
 export type DeviceRole = "sensor" | "actuator";
+export type ActuatorState = "off" | "idle" | "running" | "error" | "maintenance";
 
 export interface DeviceDto {
   id: string;
@@ -45,6 +46,14 @@ export interface DeviceDto {
   location_id: string | null;
   sampling_interval_seconds: number;
   tracking_enabled: boolean;
+  state: ActuatorState | null;
+  allowed_commands: string[];
+}
+
+export interface ActuatorStateDto {
+  device_id: string;
+  state: ActuatorState;
+  allowed_commands: string[];
 }
 
 export interface ZoneWriteDto {
@@ -221,6 +230,19 @@ export async function provisionDeviceFamily(family: DeviceFamily): Promise<Devic
     throw new Error(`Device provisioning failed with status ${response.status}`);
   }
   return response.json() as Promise<DeviceDto[]>;
+}
+
+export async function transitionActuator(
+  deviceId: string,
+  target: ActuatorState,
+): Promise<ActuatorStateDto> {
+  const response = await fetch(`${API_BASE_URL}/api/devices/${deviceId}/transition`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ target }),
+  });
+  if (!response.ok) throw new Error(await errorDetail(response, "Transition was rejected."));
+  return response.json() as Promise<ActuatorStateDto>;
 }
 
 export async function fetchLocations(signal?: AbortSignal): Promise<LocationSummaryDto[]> {

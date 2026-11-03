@@ -1,0 +1,2 @@
+class ActuatorNotFoundError(LookupError):
+    pass

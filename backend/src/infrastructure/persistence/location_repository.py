@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from src.domain.devices.entity import Device
 from src.domain.locations.entity import Location, LocationConfig, Zone
 from src.infrastructure.persistence.models import (
+    ActuatorStateRow,
     AutomationRuleRow,
     DeviceRow,
     LocationRow,
@@ -161,8 +162,12 @@ class SqlAlchemyZoneAssignmentRepository:
         self.session = session
 
     def get_device(self, device_id: UUID) -> Device | None:
-        row = self.session.get(DeviceRow, device_id)
-        return self._to_device(row) if row else None
+        result = self.session.execute(
+            select(DeviceRow, ActuatorStateRow.state)
+            .outerjoin(ActuatorStateRow, ActuatorStateRow.device_id == DeviceRow.id)
+            .where(DeviceRow.id == device_id)
+        ).one_or_none()
+        return self._to_device(*result) if result else None
 
     def get_zone(self, zone_id: UUID) -> Zone | None:
         row = self.session.get(ZoneRow, zone_id)
@@ -176,7 +181,10 @@ class SqlAlchemyZoneAssignmentRepository:
         row.location_id = zone.location_id if zone else None
         self.session.commit()
         self.session.refresh(row)
-        return self._to_device(row)
+        state = self.session.scalar(
+            select(ActuatorStateRow.state).where(ActuatorStateRow.device_id == device_id)
+        )
+        return self._to_device(row, state)
 
     def list_zone_devices(self, location_id: UUID, zone_id: UUID) -> list[Device] | None:
         zone = self.session.scalar(
@@ -187,15 +195,16 @@ class SqlAlchemyZoneAssignmentRepository:
         )
         if zone is None:
             return None
-        rows = self.session.scalars(
-            select(DeviceRow)
+        rows = self.session.execute(
+            select(DeviceRow, ActuatorStateRow.state)
+            .outerjoin(ActuatorStateRow, ActuatorStateRow.device_id == DeviceRow.id)
             .where(DeviceRow.zone_id == zone_id)
             .order_by(DeviceRow.display_name, DeviceRow.id)
         ).all()
-        return [self._to_device(row) for row in rows]
+        return [self._to_device(row, state) for row, state in rows]
 
     @staticmethod
-    def _to_device(row: DeviceRow) -> Device:
+    def _to_device(row: DeviceRow, state: str | None = None) -> Device:
         return Device(
             id=row.id,
             device_type=row.device_type,
@@ -207,4 +216,5 @@ class SqlAlchemyZoneAssignmentRepository:
             location_id=row.location_id,
             sampling_interval_seconds=row.sampling_interval_seconds,
             tracking_enabled=row.tracking_enabled,
+            state=state,
         )

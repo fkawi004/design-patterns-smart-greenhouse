@@ -1,10 +1,14 @@
 from src.application.devices.dto import DeviceDto
+from src.domain.actuators.context import ActuatorContext
 from src.domain.devices.entity import Device
 
 
 def device_to_dto(device: Device) -> DeviceDto:
     if device.id is None:
         raise ValueError("A persisted device must have an id")
+    allowed_commands: list[str] = []
+    if device.role == "actuator" and device.state is not None:
+        allowed_commands = ActuatorContext(device.state).allowed_commands
     return DeviceDto(
         id=device.id,
         device_type=device.device_type,
@@ -16,4 +20,6 @@ def device_to_dto(device: Device) -> DeviceDto:
         location_id=device.location_id,
         sampling_interval_seconds=device.sampling_interval_seconds,
         tracking_enabled=device.tracking_enabled,
+        state=device.state,
+        allowed_commands=allowed_commands,
     )

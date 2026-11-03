@@ -1,6 +1,6 @@
 # Design Patterns Smart Greenhouse
 
-A runnable three-tier course project with a FastAPI backend, PostgreSQL migrations, and a React + TypeScript dashboard. Phase 7 uses a Facade to compose locations, assigned devices, latest readings, and automation into one dashboard overview.
+A runnable three-tier course project with a FastAPI backend, PostgreSQL migrations, and a React + TypeScript dashboard. Phase 8 uses State objects to guard and persist actuator lifecycle transitions.
 
 ## Prerequisites
 
@@ -17,7 +17,7 @@ docker compose up --build -d
 docker compose exec backend alembic upgrade head
 ```
 
-The migrations create the shared `devices` table, device families, locations, zones, device assignment fields, append-only `sensor_readings` history, and one persisted `automation_rules` strategy per location. The database data remains in a Docker volume after containers restart.
+The migrations create the shared `devices` table, device families, locations, zones, device assignment fields, append-only `sensor_readings` history, one persisted `automation_rules` strategy per location, and one `actuator_states` lifecycle row per actuator. The database data remains in a Docker volume after containers restart.
 
 ## Daily start
 
@@ -40,6 +40,7 @@ The backend and frontend source directories are mounted into their development c
 - Sensors API: http://localhost:8000/api/sensors
 - Sensor reading API: `POST /api/sensors/{id}/read` and `GET /api/sensors/{id}/readings`
 - Devices API: http://localhost:8000/api/devices
+- Actuator transition API: `POST /api/devices/{id}/transition`
 - Locations API: http://localhost:8000/api/locations
 - Automation API: `PUT /api/locations/{id}/automation` and `POST /api/locations/{id}/automation/evaluate`
 - Overview API: `GET /api/locations/{id}/overview`
@@ -56,4 +57,4 @@ docker compose exec frontend npm run lint
 docker compose exec frontend npm run build
 ```
 
-See [the phase order](docs/phases/README.md), [the Facade notes](docs/patterns/facade.md), and [the Phase 7 answers](docs/phases/phase-07/questions.md).
+See [the phase order](docs/phases/README.md), [the State notes](docs/patterns/state.md), and [the Phase 8 answers](docs/phases/phase-08/questions.md).
