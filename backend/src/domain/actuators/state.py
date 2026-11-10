@@ -1,8 +1,16 @@
 from abc import ABC
+from dataclasses import dataclass
+from datetime import datetime
 
 
 class IllegalTransitionError(ValueError):
     """Raised when an actuator cannot move to the requested lifecycle state."""
+
+
+@dataclass(frozen=True, slots=True)
+class ActuatorStateSnapshot:
+    state: str
+    updated_at: datetime
 
 
 class ActuatorState(ABC):

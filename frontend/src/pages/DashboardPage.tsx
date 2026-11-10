@@ -3,16 +3,16 @@ import LocationConfigWizard from "../components/config/LocationConfigWizard";
 import OverviewPanel from "../components/overview/OverviewPanel";
 import SensorList from "../features/sensors/SensorList";
 import StrategyPanel from "../features/automation/StrategyPanel";
+import ExecutionLog from "../features/actuators/ExecutionLog";
 
 const sections = [
-  { id: "controls", title: "Controls", copy: "Manual greenhouse controls will live here." },
   { id: "events", title: "Events", copy: "System activity and alerts will appear here." },
 ];
 
 export default function DashboardPage() {
   return (
     <section aria-labelledby="dashboard-title">
-      <p className="text-sm font-medium text-cyan-300">Phase 8 · State</p>
+      <p className="text-sm font-medium text-cyan-300">Phase 9 · Decorator</p>
       <h2 id="dashboard-title" className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
         Greenhouse dashboard
       </h2>
@@ -23,6 +23,7 @@ export default function DashboardPage() {
       <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <OverviewPanel />
         <DeviceList />
+        <ExecutionLog />
         <LocationConfigWizard />
         <SensorList />
         <StrategyPanel />

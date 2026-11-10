@@ -10,6 +10,7 @@ This repository grows one phase at a time. Each phase keeps the same three-tier 
 6. Phase 6 — Strategy and persisted location automation policies (completed)
 7. Phase 7 — Facade and the composed location overview (completed)
 8. Phase 8 — State and persisted actuator lifecycle (completed)
-9. Phases 9–12 — additional course patterns and greenhouse capabilities
+9. Phase 9 — Decorator policies and persisted actuator executions (completed)
+10. Phases 10–12 — additional course patterns and greenhouse capabilities
 
 Phase-specific requirements, implementation notes, and answers belong under this directory.

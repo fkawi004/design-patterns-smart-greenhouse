@@ -3,6 +3,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from src.domain.actuators.state import ActuatorStateSnapshot
 from src.infrastructure.persistence.models import ActuatorStateRow, DeviceRow
 
 
@@ -11,14 +12,21 @@ class SqlAlchemyActuatorStateRepository:
         self.session = session
 
     def get_state(self, device_id: UUID) -> str | None:
-        return self.session.scalar(
-            select(ActuatorStateRow.state)
+        snapshot = self.get_snapshot(device_id)
+        return snapshot.state if snapshot is not None else None
+
+    def get_snapshot(self, device_id: UUID) -> ActuatorStateSnapshot | None:
+        row = self.session.execute(
+            select(ActuatorStateRow.state, ActuatorStateRow.updated_at)
             .join(DeviceRow, DeviceRow.id == ActuatorStateRow.device_id)
             .where(
                 ActuatorStateRow.device_id == device_id,
                 DeviceRow.role == "actuator",
             )
-        )
+        ).one_or_none()
+        if row is None:
+            return None
+        return ActuatorStateSnapshot(state=row.state, updated_at=row.updated_at)
 
     def save_state(self, device_id: UUID, state: str) -> None:
         row = self.session.get(ActuatorStateRow, device_id)

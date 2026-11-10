@@ -56,6 +56,15 @@ export interface ActuatorStateDto {
   allowed_commands: string[];
 }
 
+export interface ActuatorExecutionDto {
+  id: string;
+  device_id: string;
+  success: boolean;
+  policy_applied: string[];
+  message: string | null;
+  created_at: string;
+}
+
 export interface ZoneWriteDto {
   name: string;
   moisture_threshold_low: number;
@@ -243,6 +252,29 @@ export async function transitionActuator(
   });
   if (!response.ok) throw new Error(await errorDetail(response, "Transition was rejected."));
   return response.json() as Promise<ActuatorStateDto>;
+}
+
+export async function fetchActuatorExecutions(
+  limit = 20,
+  signal?: AbortSignal,
+): Promise<ActuatorExecutionDto[]> {
+  const query = new URLSearchParams({ limit: String(limit) });
+  const response = await fetch(`${API_BASE_URL}/api/actuators/executions?${query}`, { signal });
+  if (!response.ok) throw new Error(await errorDetail(response, "Executions could not be loaded."));
+  return response.json() as Promise<ActuatorExecutionDto[]>;
+}
+
+export async function applyActuatorCommand(
+  deviceId: string,
+  command: string,
+  payload: Record<string, unknown> = {},
+): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/actuators/${deviceId}/apply`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ command, payload }),
+  });
+  if (!response.ok) throw new Error(await errorDetail(response, "Actuator command was rejected."));
 }
 
 export async function fetchLocations(signal?: AbortSignal): Promise<LocationSummaryDto[]> {
