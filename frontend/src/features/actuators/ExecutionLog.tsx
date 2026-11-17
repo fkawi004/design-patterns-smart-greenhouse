@@ -33,7 +33,14 @@ export default function ExecutionLog() {
   useEffect(() => {
     const controller = new AbortController();
     void refresh(controller.signal);
-    return () => controller.abort();
+    function refreshAfterCommand() {
+      void refresh();
+    }
+    window.addEventListener("actuator-executions-changed", refreshAfterCommand);
+    return () => {
+      controller.abort();
+      window.removeEventListener("actuator-executions-changed", refreshAfterCommand);
+    };
   }, []);
 
   return (

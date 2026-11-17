@@ -15,6 +15,7 @@ from src.infrastructure.persistence.reading_repository import SqlAlchemyReadingR
 from src.infrastructure.settings import get_settings
 from src.interfaces.api.actuators import router as actuators_router
 from src.interfaces.api.automation import router as automation_router
+from src.interfaces.api.commands import router as commands_router
 from src.interfaces.api.devices import router as devices_router
 from src.interfaces.api.health import router as health_router
 from src.interfaces.api.locations import router as locations_router
@@ -70,6 +71,7 @@ app.include_router(health_router)
 app.include_router(sensors_router)
 app.include_router(devices_router)
 app.include_router(actuators_router)
+app.include_router(commands_router)
 app.include_router(locations_router)
 app.include_router(automation_router)
 app.include_router(overview_router)

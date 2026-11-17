@@ -26,7 +26,7 @@ The max-run-time decorator reads the persisted Phase 8 state. It blocks when the
 
 Migration `9d4f7c2b8a61` creates `actuator_execution_log`. A successful attempt stores `success=true`, policy `logging`, and a null message. A max-run-time rejection stores `success=false`, policies `maxRunTime` and `logging`, and the message `Max run time exceeded`.
 
-`GET /api/actuators/executions?limit=20` returns recent rows for the dashboard. The small `POST /api/actuators/{device_id}/apply` route demonstrates the decorated port until Phase 10 introduces Command.
+`GET /api/actuators/executions?limit=20` returns recent rows for the dashboard. Phase 10 commands now call this decorated port through the command invoker; the temporary direct apply endpoint is no longer needed.
 
 ## Decorator compared with inheritance
 

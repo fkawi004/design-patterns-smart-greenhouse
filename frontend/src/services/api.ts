@@ -65,6 +65,19 @@ export interface ActuatorExecutionDto {
   created_at: string;
 }
 
+export type CommandType = "start_pump" | "stop_pump" | "set_light_level";
+export type CommandStatus = "success" | "failed" | "rejected";
+
+export interface CommandLogDto {
+  id: string;
+  command_type: CommandType;
+  device_id: string;
+  payload: Record<string, unknown>;
+  status: CommandStatus;
+  error_message: string | null;
+  created_at: string;
+}
+
 export interface ZoneWriteDto {
   name: string;
   moisture_threshold_low: number;
@@ -264,17 +277,30 @@ export async function fetchActuatorExecutions(
   return response.json() as Promise<ActuatorExecutionDto[]>;
 }
 
-export async function applyActuatorCommand(
+export async function executeCommand(
+  commandType: CommandType,
   deviceId: string,
-  command: string,
   payload: Record<string, unknown> = {},
-): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/actuators/${deviceId}/apply`, {
+): Promise<CommandLogDto> {
+  const response = await fetch(`${API_BASE_URL}/api/commands`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ command, payload }),
+    body: JSON.stringify({ command_type: commandType, device_id: deviceId, payload }),
   });
-  if (!response.ok) throw new Error(await errorDetail(response, "Actuator command was rejected."));
+  if (response.ok || response.status === 409) {
+    return response.json() as Promise<CommandLogDto>;
+  }
+  throw new Error(await errorDetail(response, "Actuator command could not be executed."));
+}
+
+export async function fetchCommandHistory(
+  limit = 50,
+  signal?: AbortSignal,
+): Promise<CommandLogDto[]> {
+  const query = new URLSearchParams({ limit: String(limit) });
+  const response = await fetch(`${API_BASE_URL}/api/commands?${query}`, { signal });
+  if (!response.ok) throw new Error(await errorDetail(response, "Command history could not be loaded."));
+  return response.json() as Promise<CommandLogDto[]>;
 }
 
 export async function fetchLocations(signal?: AbortSignal): Promise<LocationSummaryDto[]> {

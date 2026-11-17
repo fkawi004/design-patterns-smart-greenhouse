@@ -11,6 +11,7 @@ This repository grows one phase at a time. Each phase keeps the same three-tier 
 7. Phase 7 — Facade and the composed location overview (completed)
 8. Phase 8 — State and persisted actuator lifecycle (completed)
 9. Phase 9 — Decorator policies and persisted actuator executions (completed)
-10. Phases 10–12 — additional course patterns and greenhouse capabilities
+10. Phase 10 — Command objects and auditable actuator history (completed)
+11. Phases 11–12 — additional course patterns and greenhouse capabilities
 
 Phase-specific requirements, implementation notes, and answers belong under this directory.

@@ -1,6 +1,6 @@
 # Design Patterns Smart Greenhouse
 
-A runnable three-tier course project with a FastAPI backend, PostgreSQL migrations, and a React + TypeScript dashboard. Phase 9 decorates the actuator port with logging and max-run-time policies and persists every execution attempt.
+A runnable three-tier course project with a FastAPI backend, PostgreSQL migrations, and a React + TypeScript dashboard. Phase 10 encapsulates actuator actions as command objects, applies State and Decorator checks, and persists auditable command history.
 
 ## Prerequisites
 
@@ -17,7 +17,7 @@ docker compose up --build -d
 docker compose exec backend alembic upgrade head
 ```
 
-The migrations create the shared `devices` table, device families, locations, zones, device assignment fields, append-only `sensor_readings` history, persisted automation and actuator state, and the `actuator_execution_log`. The database data remains in a Docker volume after containers restart.
+The migrations create the shared `devices` table, device families, locations, zones, device assignment fields, append-only `sensor_readings` history, persisted automation and actuator state, `actuator_execution_log`, and `command_log`. The database data remains in a Docker volume after containers restart.
 
 ## Daily start
 
@@ -41,8 +41,8 @@ The backend and frontend source directories are mounted into their development c
 - Sensor reading API: `POST /api/sensors/{id}/read` and `GET /api/sensors/{id}/readings`
 - Devices API: http://localhost:8000/api/devices
 - Actuator transition API: `POST /api/devices/{id}/transition`
-- Actuator apply API: `POST /api/actuators/{id}/apply`
 - Actuator execution API: `GET /api/actuators/executions?limit=20`
+- Command API: `POST /api/commands` and `GET /api/commands?limit=50`
 - Locations API: http://localhost:8000/api/locations
 - Automation API: `PUT /api/locations/{id}/automation` and `POST /api/locations/{id}/automation/evaluate`
 - Overview API: `GET /api/locations/{id}/overview`
@@ -59,4 +59,4 @@ docker compose exec frontend npm run lint
 docker compose exec frontend npm run build
 ```
 
-See [the phase order](docs/phases/README.md), [the Decorator notes](docs/patterns/decorator.md), and [the Phase 9 answers](docs/phases/phase-09/questions.md).
+See [the phase order](docs/phases/README.md), [the Command notes](docs/patterns/command.md), and [the Phase 10 answers](docs/phases/phase-10/questions.md).

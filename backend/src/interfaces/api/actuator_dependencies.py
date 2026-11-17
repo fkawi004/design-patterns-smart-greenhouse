@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from src.application.actuators.service import ActuatorExecutionService
+from src.domain.actuators.ports import ActuatorPort
 from src.infrastructure.adapters.actuators.logging_decorator import (
     LoggingActuatorDecorator,
 )
@@ -16,14 +17,13 @@ from src.infrastructure.persistence.execution_log_repository import (
 )
 
 
-def build_actuator_execution_service(session: Session) -> ActuatorExecutionService:
+def build_actuator_port(session: Session) -> ActuatorPort:
     state_repository = SqlAlchemyActuatorStateRepository(session)
     log_repository = SqlAlchemyExecutionLogRepository(session)
     adapter = SimulationActuatorAdapter()
     guarded_port = MaxRunTimeActuatorDecorator(adapter, state_repository)
-    decorated_port = LoggingActuatorDecorator(guarded_port, log_repository)
-    return ActuatorExecutionService(
-        decorated_port=decorated_port,
-        state_reader=state_repository,
-        log_reader=log_repository,
-    )
+    return LoggingActuatorDecorator(guarded_port, log_repository)
+
+
+def build_actuator_execution_service(session: Session) -> ActuatorExecutionService:
+    return ActuatorExecutionService(SqlAlchemyExecutionLogRepository(session))

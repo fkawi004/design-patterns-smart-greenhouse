@@ -67,11 +67,16 @@ export default function DeviceList() {
       void loadZoneOptions();
       void fetchDevices(family).then(setDevices);
     }
+    function refreshAfterActuatorChange() {
+      void fetchDevices(family).then(setDevices);
+    }
     void loadZoneOptions();
     window.addEventListener("locations-changed", refreshAfterLocationChange);
+    window.addEventListener("actuator-state-changed", refreshAfterActuatorChange);
     return () => {
       active = false;
       window.removeEventListener("locations-changed", refreshAfterLocationChange);
+      window.removeEventListener("actuator-state-changed", refreshAfterActuatorChange);
     };
   }, [family]);
 

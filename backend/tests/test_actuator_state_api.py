@@ -66,7 +66,8 @@ def test_device_api_exposes_actuator_state_and_allowed_commands() -> None:
     devices = {item["id"]: item for item in response.json()}
     assert devices[str(actuator.id)]["state"] == "idle"
     assert devices[str(actuator.id)]["allowed_commands"] == [
-        "start",
+        "start_pump",
+        "set_light_level",
         "enter_maintenance",
         "report_error",
         "power_off",
@@ -111,7 +112,12 @@ def test_legal_transition_is_persisted() -> None:
     assert response.json() == {
         "device_id": str(actuator.id),
         "state": "running",
-        "allowed_commands": ["stop", "report_error", "power_off"],
+        "allowed_commands": [
+            "stop_pump",
+            "set_light_level",
+            "report_error",
+            "power_off",
+        ],
     }
     with SessionLocal() as session:
         persisted = session.scalar(

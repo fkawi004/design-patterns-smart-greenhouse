@@ -34,13 +34,19 @@ class OffState(ActuatorState):
 class IdleState(ActuatorState):
     name = "idle"
     allowed_targets = frozenset({"running", "maintenance", "error", "off"})
-    commands = ("start", "enter_maintenance", "report_error", "power_off")
+    commands = (
+        "start_pump",
+        "set_light_level",
+        "enter_maintenance",
+        "report_error",
+        "power_off",
+    )
 
 
 class RunningState(ActuatorState):
     name = "running"
     allowed_targets = frozenset({"idle", "error", "off"})
-    commands = ("stop", "report_error", "power_off")
+    commands = ("stop_pump", "set_light_level", "report_error", "power_off")
 
 
 class ErrorState(ActuatorState):

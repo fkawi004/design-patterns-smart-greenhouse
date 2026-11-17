@@ -64,12 +64,16 @@ def test_successful_apply_writes_execution_row() -> None:
     actuator = _seed_actuator()
 
     applied = client.post(
-        f"/api/actuators/{actuator.id}/apply",
-        json={"command": "unknown_command", "payload": {"level": 2}},
+        "/api/commands",
+        json={
+            "command_type": "start_pump",
+            "device_id": str(actuator.id),
+            "payload": {},
+        },
     )
     listed = client.get("/api/actuators/executions?limit=20")
 
-    assert applied.status_code == 204
+    assert applied.status_code == 200
     assert listed.status_code == 200
     execution = next(
         item for item in listed.json() if item["device_id"] == str(actuator.id)
@@ -94,13 +98,18 @@ def test_blocked_apply_writes_failed_execution_row() -> None:
     )
 
     blocked = client.post(
-        f"/api/actuators/{actuator.id}/apply",
-        json={"command": "anything", "payload": {}},
+        "/api/commands",
+        json={
+            "command_type": "stop_pump",
+            "device_id": str(actuator.id),
+            "payload": {},
+        },
     )
     listed = client.get("/api/actuators/executions?limit=20")
 
-    assert blocked.status_code == 409
-    assert blocked.json()["detail"] == "Max run time exceeded"
+    assert blocked.status_code == 200
+    assert blocked.json()["status"] == "failed"
+    assert blocked.json()["error_message"] == "Max run time exceeded"
     execution = next(
         item for item in listed.json() if item["device_id"] == str(actuator.id)
     )
@@ -111,17 +120,25 @@ def test_blocked_apply_writes_failed_execution_row() -> None:
 
 def test_execution_limit_and_missing_actuator() -> None:
     actuator = _seed_actuator()
-    for command in ("first", "second"):
+    for command in ("start_pump", "stop_pump"):
         response = client.post(
-            f"/api/actuators/{actuator.id}/apply",
-            json={"command": command, "payload": {}},
+            "/api/commands",
+            json={
+                "command_type": command,
+                "device_id": str(actuator.id),
+                "payload": {},
+            },
         )
-        assert response.status_code == 204
+        assert response.status_code == 200
 
     limited = client.get("/api/actuators/executions?limit=1")
     missing = client.post(
-        f"/api/actuators/{uuid4()}/apply",
-        json={"command": "anything", "payload": {}},
+        "/api/commands",
+        json={
+            "command_type": "start_pump",
+            "device_id": str(uuid4()),
+            "payload": {},
+        },
     )
 
     assert limited.status_code == 200

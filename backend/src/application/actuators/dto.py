@@ -1,13 +1,7 @@
 from datetime import datetime
-from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field
-
-
-class ActuatorApplyRequestDto(BaseModel):
-    command: str
-    payload: dict[str, Any] = Field(default_factory=dict)
+from pydantic import BaseModel
 
 
 class ActuatorExecutionDto(BaseModel):

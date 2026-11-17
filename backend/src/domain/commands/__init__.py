@@ -1,0 +1,1 @@
+"""Command pattern domain objects."""
